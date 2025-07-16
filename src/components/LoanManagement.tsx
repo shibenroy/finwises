@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, createContext, useContext } from 'react';
 import { 
   CreditCard, 
   TrendingUp, 
@@ -10,36 +10,678 @@ import {
   Calculator,
   Clock,
   DollarSign,
-  Target
+  Target,
+  X
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useFinance } from '@/contexts/FinanceContext';
-import { useToast } from '@/hooks/use-toast';
-import EMICalculator from './EMICalculator';
 
+// Mock UI Components
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
+    {children}
+  </div>
+);
+
+const CardContent = ({ children, className = "" }) => (
+  <div className={`p-6 ${className}`}>
+    {children}
+  </div>
+);
+
+const CardHeader = ({ children, className = "" }) => (
+  <div className={`px-6 py-4 border-b ${className}`}>
+    {children}
+  </div>
+);
+
+const CardTitle = ({ children, className = "" }) => (
+  <h3 className={`text-lg font-semibold ${className}`}>
+    {children}
+  </h3>
+);
+
+const Button = ({ children, variant = "default", size = "default", onClick, className = "" }) => {
+  const baseClasses = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
+  const variantClasses = {
+    default: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+    outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500"
+  };
+  const sizeClasses = {
+    default: "h-10 px-4 py-2",
+    sm: "h-8 px-3 text-sm"
+  };
+  
+  return (
+    <button 
+      onClick={onClick}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+    >
+      {children}
+    </button>
+  );
+};
+
+const Badge = ({ children, className = "" }) => (
+  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${className}`}>
+    {children}
+  </span>
+);
+
+const Progress = ({ value, className = "" }) => (
+  <div className={`w-full bg-gray-200 rounded-full ${className}`}>
+    <div 
+      className="bg-blue-600 h-full rounded-full transition-all duration-300"
+      style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+    />
+  </div>
+);
+
+const Input = ({ type = "text", placeholder, value, onChange, className = "" }) => (
+  <input
+    type={type}
+    placeholder={placeholder}
+    value={value}
+    onChange={onChange}
+    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${className}`}
+  />
+);
+
+const Label = ({ children, className = "" }) => (
+  <label className={`block text-sm font-medium text-gray-700 ${className}`}>
+    {children}
+  </label>
+);
+
+// Mock Finance Context
+const FinanceContext = createContext();
+
+const FinanceProvider = ({ children }) => {
+  const [state, setState] = useState({
+    loans: [
+      {
+        id: "1",
+        type: "Personal Loan",
+        bank: "HDFC Bank",
+        originalAmount: 500000,
+        currentBalance: 350000,
+        monthlyEmi: 12500,
+        interestRate: 12.5,
+        remainingMonths: 28,
+        nextDueDate: "2024-07-25",
+        status: "active",
+        color: "bg-blue-500"
+      },
+      {
+        id: "2",
+        type: "Student Loan",
+        bank: "SBI",
+        originalAmount: 300000,
+        currentBalance: 180000,
+        monthlyEmi: 8200,
+        interestRate: 9.5,
+        remainingMonths: 22,
+        nextDueDate: "2024-07-28",
+        status: "active",
+        color: "bg-green-500"
+      },
+      {
+        id: "3",
+        type: "Credit Card",
+        bank: "ICICI Bank",
+        originalAmount: 50000,
+        currentBalance: 35000,
+        monthlyEmi: 3500,
+        interestRate: 18.0,
+        remainingMonths: 10,
+        nextDueDate: "2024-07-30",
+        status: "active",
+        color: "bg-red-500"
+      }
+    ]
+  });
+
+  const addLoan = (loan) => {
+    setState(prev => ({
+      ...prev,
+      loans: [...prev.loans, { ...loan, id: Date.now().toString() }]
+    }));
+  };
+
+  const updateLoan = (id, updates) => {
+    setState(prev => ({
+      ...prev,
+      loans: prev.loans.map(loan => 
+        loan.id === id ? { ...loan, ...updates } : loan
+      )
+    }));
+  };
+
+  return (
+    <FinanceContext.Provider value={{ state, addLoan, updateLoan }}>
+      {children}
+    </FinanceContext.Provider>
+  );
+};
+
+const useFinance = () => {
+  const context = useContext(FinanceContext);
+  if (!context) {
+    throw new Error('useFinance must be used within a FinanceProvider');
+  }
+  return context;
+};
+
+// Mock Toast Hook
+const useToast = () => {
+  const toast = ({ title, description }) => {
+    alert(`${title}: ${description}`);
+  };
+  return { toast };
+};
+
+// EMI Calculator Component
+const EMICalculator = ({ isOpen, onClose }) => {
+  const [loanAmount, setLoanAmount] = useState('');
+  const [interestRate, setInterestRate] = useState('');
+  const [loanTenure, setLoanTenure] = useState('');
+  const [emiResult, setEmiResult] = useState(null);
+
+  const calculateEMI = () => {
+    const principal = parseFloat(loanAmount);
+    const rate = parseFloat(interestRate) / 12 / 100;
+    const months = parseFloat(loanTenure);
+
+    if (principal && rate && months) {
+      const emi = (principal * rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
+      const totalAmount = emi * months;
+      const totalInterest = totalAmount - principal;
+
+      setEmiResult({
+        emi: Math.round(emi),
+        totalAmount: Math.round(totalAmount),
+        totalInterest: Math.round(totalInterest)
+      });
+    }
+  };
+
+  const resetCalculator = () => {
+    setLoanAmount('');
+    setInterestRate('');
+    setLoanTenure('');
+    setEmiResult(null);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold">EMI Calculator</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <Label>Loan Amount (₹)</Label>
+            <Input
+              type="number"
+              placeholder="Enter loan amount"
+              value={loanAmount}
+              onChange={(e) => setLoanAmount(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Interest Rate (% per annum)</Label>
+            <Input
+              type="number"
+              placeholder="Enter interest rate"
+              value={interestRate}
+              onChange={(e) => setInterestRate(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Loan Tenure (months)</Label>
+            <Input
+              type="number"
+              placeholder="Enter loan tenure"
+              value={loanTenure}
+              onChange={(e) => setLoanTenure(e.target.value)}
+            />
+          </div>
+
+          <div className="flex space-x-2">
+            <Button onClick={calculateEMI} className="flex-1">
+              Calculate EMI
+            </Button>
+            <Button variant="outline" onClick={resetCalculator}>
+              Reset
+            </Button>
+          </div>
+
+          {emiResult && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <h3 className="font-semibold mb-3">EMI Calculation Result</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Monthly EMI:</span>
+                  <span className="font-semibold">₹{emiResult.emi.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Amount:</span>
+                  <span className="font-semibold">₹{emiResult.totalAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Interest:</span>
+                  <span className="font-semibold">₹{emiResult.totalInterest.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Add Loan Modal Component
+const AddLoanModal = ({ isOpen, onClose }) => {
+  const { addLoan } = useFinance();
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    type: '',
+    bank: '',
+    originalAmount: '',
+    currentBalance: '',
+    monthlyEmi: '',
+    interestRate: '',
+    remainingMonths: '',
+    nextDueDate: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.type || !formData.bank || !formData.originalAmount) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields"
+      });
+      return;
+    }
+
+    const colors = ['bg-blue-500', 'bg-green-500', 'bg-red-500', 'bg-purple-500', 'bg-yellow-500'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+    addLoan({
+      ...formData,
+      originalAmount: parseFloat(formData.originalAmount),
+      currentBalance: parseFloat(formData.currentBalance || formData.originalAmount),
+      monthlyEmi: parseFloat(formData.monthlyEmi),
+      interestRate: parseFloat(formData.interestRate),
+      remainingMonths: parseInt(formData.remainingMonths),
+      status: 'active',
+      color: randomColor
+    });
+
+    toast({
+      title: "Success",
+      description: "Loan added successfully!"
+    });
+
+    setFormData({
+      type: '',
+      bank: '',
+      originalAmount: '',
+      currentBalance: '',
+      monthlyEmi: '',
+      interestRate: '',
+      remainingMonths: '',
+      nextDueDate: ''
+    });
+    onClose();
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold">Add New Loan</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Loan Type *</Label>
+            <Input
+              placeholder="e.g., Personal Loan, Home Loan"
+              value={formData.type}
+              onChange={(e) => handleChange('type', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Bank/Lender *</Label>
+            <Input
+              placeholder="e.g., HDFC Bank"
+              value={formData.bank}
+              onChange={(e) => handleChange('bank', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Original Amount (₹) *</Label>
+            <Input
+              type="number"
+              placeholder="Enter original loan amount"
+              value={formData.originalAmount}
+              onChange={(e) => handleChange('originalAmount', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Current Balance (₹)</Label>
+            <Input
+              type="number"
+              placeholder="Enter current outstanding balance"
+              value={formData.currentBalance}
+              onChange={(e) => handleChange('currentBalance', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Monthly EMI (₹)</Label>
+            <Input
+              type="number"
+              placeholder="Enter monthly EMI"
+              value={formData.monthlyEmi}
+              onChange={(e) => handleChange('monthlyEmi', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Interest Rate (%)</Label>
+            <Input
+              type="number"
+              step="0.1"
+              placeholder="Enter interest rate"
+              value={formData.interestRate}
+              onChange={(e) => handleChange('interestRate', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Remaining Months</Label>
+            <Input
+              type="number"
+              placeholder="Enter remaining months"
+              value={formData.remainingMonths}
+              onChange={(e) => handleChange('remainingMonths', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Next Due Date</Label>
+            <Input
+              type="date"
+              value={formData.nextDueDate}
+              onChange={(e) => handleChange('nextDueDate', e.target.value)}
+            />
+          </div>
+
+          <div className="flex space-x-2 pt-4">
+            <Button type="submit" className="flex-1">
+              Add Loan
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Payment Modal Component
+const PaymentModal = ({ isOpen, onClose, loan }) => {
+  const { updateLoan } = useFinance();
+  const { toast } = useToast();
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentType, setPaymentType] = useState('emi');
+
+  const handlePayment = () => {
+    if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid payment amount"
+      });
+      return;
+    }
+
+    const amount = parseFloat(paymentAmount);
+    const newBalance = Math.max(0, loan.currentBalance - amount);
+    
+    updateLoan(loan.id, {
+      currentBalance: newBalance,
+      nextDueDate: paymentType === 'emi' ? getNextDueDate(loan.nextDueDate) : loan.nextDueDate
+    });
+
+    toast({
+      title: "Payment Successful",
+      description: `Payment of ₹${amount.toLocaleString()} processed successfully!`
+    });
+
+    setPaymentAmount('');
+    onClose();
+  };
+
+  const getNextDueDate = (currentDueDate) => {
+    const date = new Date(currentDueDate);
+    date.setMonth(date.getMonth() + 1);
+    return date.toISOString().split('T')[0];
+  };
+
+  if (!isOpen || !loan) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold">Make Payment</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h3 className="font-semibold">{loan.type}</h3>
+            <p className="text-sm text-gray-600">{loan.bank}</p>
+            <p className="text-lg font-bold">Outstanding: ₹{loan.currentBalance.toLocaleString()}</p>
+          </div>
+
+          <div>
+            <Label>Payment Type</Label>
+            <select 
+              value={paymentType}
+              onChange={(e) => setPaymentType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="emi">Regular EMI (₹{loan.monthlyEmi.toLocaleString()})</option>
+              <option value="extra">Extra Payment</option>
+              <option value="full">Full Payment</option>
+            </select>
+          </div>
+
+          <div>
+            <Label>Payment Amount (₹)</Label>
+            <Input
+              type="number"
+              placeholder="Enter payment amount"
+              value={paymentAmount}
+              onChange={(e) => setPaymentAmount(e.target.value)}
+            />
+            {paymentType === 'emi' && (
+              <button 
+                type="button"
+                onClick={() => setPaymentAmount(loan.monthlyEmi.toString())}
+                className="text-sm text-blue-600 hover:text-blue-800 mt-1"
+              >
+                Use EMI amount (₹{loan.monthlyEmi.toLocaleString()})
+              </button>
+            )}
+            {paymentType === 'full' && (
+              <button 
+                type="button"
+                onClick={() => setPaymentAmount(loan.currentBalance.toString())}
+                className="text-sm text-blue-600 hover:text-blue-800 mt-1"
+              >
+                Pay full amount (₹{loan.currentBalance.toLocaleString()})
+              </button>
+            )}
+          </div>
+
+          <div className="flex space-x-2 pt-4">
+            <Button onClick={handlePayment} className="flex-1">
+              Process Payment
+            </Button>
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Loan Details Modal Component
+const LoanDetailsModal = ({ isOpen, onClose, loan }) => {
+  if (!isOpen || !loan) return null;
+
+  const calculateProgress = (original, current) => {
+    return ((original - current) / original) * 100;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold">Loan Details</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Loan Type</Label>
+              <p className="font-semibold">{loan.type}</p>
+            </div>
+            <div>
+              <Label>Bank/Lender</Label>
+              <p className="font-semibold">{loan.bank}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Original Amount</Label>
+              <p className="font-semibold">₹{loan.originalAmount.toLocaleString()}</p>
+            </div>
+            <div>
+              <Label>Current Balance</Label>
+              <p className="font-semibold">₹{loan.currentBalance.toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Monthly EMI</Label>
+              <p className="font-semibold">₹{loan.monthlyEmi.toLocaleString()}</p>
+            </div>
+            <div>
+              <Label>Interest Rate</Label>
+              <p className="font-semibold">{loan.interestRate}%</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Remaining Months</Label>
+              <p className="font-semibold">{loan.remainingMonths}</p>
+            </div>
+            <div>
+              <Label>Next Due Date</Label>
+              <p className="font-semibold">{loan.nextDueDate}</p>
+            </div>
+          </div>
+
+          <div>
+            <Label>Repayment Progress</Label>
+            <div className="mt-2">
+              <Progress value={calculateProgress(loan.originalAmount, loan.currentBalance)} className="h-3" />
+              <div className="flex justify-between text-sm text-gray-600 mt-1">
+                <span>{calculateProgress(loan.originalAmount, loan.currentBalance).toFixed(1)}% completed</span>
+                <span>₹{(loan.originalAmount - loan.currentBalance).toLocaleString()} paid</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Total Interest (Projected)</Label>
+              <p className="font-semibold">₹{((loan.monthlyEmi * loan.remainingMonths) - loan.currentBalance).toLocaleString()}</p>
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Badge className={loan.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+              </Badge>
+            </div>
+          </div>
+
+          <Button onClick={onClose} className="w-full">
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Main Loan Management Component
 const LoanManagement = () => {
   const { state } = useFinance();
   const { toast } = useToast();
   const [showEMICalculator, setShowEMICalculator] = useState(false);
+  const [showAddLoan, setShowAddLoan] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState(null);
 
-  const handleMakePayment = (loanId: string) => {
-    toast({
-      title: "Payment Initiated",
-      description: "Redirecting to payment gateway...",
-    });
-    // In a real app, this would redirect to a payment gateway
+  const handleMakePayment = (loanId) => {
+    const loan = state.loans.find(l => l.id === loanId);
+    setSelectedLoan(loan);
+    setShowPaymentModal(true);
   };
 
-  const handleViewDetails = (loanId: string) => {
-    toast({
-      title: "Loan Details",
-      description: "Opening detailed loan information...",
-    });
-    // In a real app, this would open a detailed view
+  const handleViewDetails = (loanId) => {
+    const loan = state.loans.find(l => l.id === loanId);
+    setSelectedLoan(loan);
+    setShowDetailsModal(true);
   };
 
   const loanSummary = {
@@ -49,7 +691,7 @@ const LoanManagement = () => {
     avgInterestRate: 12.3
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
       case 'overdue': return 'bg-red-100 text-red-800';
@@ -58,274 +700,303 @@ const LoanManagement = () => {
     }
   };
 
-  const calculateProgress = (original: number, current: number) => {
+  const calculateProgress = (original, current) => {
     return ((original - current) / original) * 100;
   };
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Loan Management</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">Track and manage all your debts in one place</p>
+    <FinanceProvider>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Loan Management</h1>
+              <p className="text-gray-600 mt-1">Track and manage all your debts in one place</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowEMICalculator(true)}
+              >
+                <Calculator className="w-4 h-4 mr-2" />
+                EMI Calculator
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                onClick={() => setShowAddLoan(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Loan
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowEMICalculator(true)}
-            >
-              <Calculator className="w-4 h-4 mr-2" />
-              EMI Calculator
-            </Button>
-            <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Loan
-            </Button>
+
+          {/* Loan Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white border-0">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-red-100 text-sm">Total Debt</p>
+                    <p className="text-2xl font-bold">₹{loanSummary.totalDebt.toLocaleString()}</p>
+                  </div>
+                  <CreditCard className="w-8 h-8 text-red-200" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-sm">Monthly EMI</p>
+                    <p className="text-2xl font-bold">₹{loanSummary.monthlyEmi.toLocaleString()}</p>
+                  </div>
+                  <Calendar className="w-8 h-8 text-blue-200" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-yellow-100 text-sm">Total Interest</p>
+                    <p className="text-2xl font-bold">₹{loanSummary.totalInterest.toLocaleString()}</p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-yellow-200" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-100 text-sm">Avg Interest Rate</p>
+                    <p className="text-2xl font-bold">{loanSummary.avgInterestRate}%</p>
+                  </div>
+                  <Target className="w-8 h-8 text-purple-200" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
 
-        {/* Loan Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white border-0">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-red-100 text-sm">Total Debt</p>
-                  <p className="text-2xl font-bold">₹{loanSummary.totalDebt.toLocaleString()}</p>
-                </div>
-                <CreditCard className="w-8 h-8 text-red-200" />
-              </div>
-            </CardContent>
-          </Card>
+          {/* Loan Details */}
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">Active Loans</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {state.loans.map((loan) => (
+                  <div key={loan.id} className="p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-12 h-12 ${loan.color} rounded-full flex items-center justify-center`}>
+                          <CreditCard className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">{loan.type}</h3>
+                          <p className="text-sm text-gray-500">{loan.bank}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <Badge className={getStatusColor(loan.status)}>
+                          {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                        </Badge>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-500">Next Due</p>
+                          <p className="font-medium">{loan.nextDueDate}</p>
+                        </div>
+                      </div>
+                    </div>
 
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">Monthly EMI</p>
-                  <p className="text-2xl font-bold">₹{loanSummary.monthlyEmi.toLocaleString()}</p>
-                </div>
-                <Calendar className="w-8 h-8 text-blue-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-yellow-100 text-sm">Total Interest</p>
-                  <p className="text-2xl font-bold">₹{loanSummary.totalInterest.toLocaleString()}</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-yellow-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm">Avg Interest Rate</p>
-                  <p className="text-2xl font-bold">{loanSummary.avgInterestRate}%</p>
-                </div>
-                <Target className="w-8 h-8 text-purple-200" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Loan Details */}
-        <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold">Active Loans</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {state.loans.map((loan) => (
-                <div key={loan.id} className="p-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-12 h-12 ${loan.color} rounded-full flex items-center justify-center`}>
-                        <CreditCard className="w-6 h-6 text-white" />
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Outstanding</p>
+                        <p className="text-lg font-semibold">₹{loan.currentBalance.toLocaleString()}</p>
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{loan.type}</h3>
-                        <p className="text-sm text-gray-500">{loan.bank}</p>
+                        <p className="text-sm text-gray-500">Monthly EMI</p>
+                        <p className="text-lg font-semibold">₹{loan.monthlyEmi.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Interest Rate</p>
+                        <p className="text-lg font-semibold">{loan.interestRate}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Remaining Months</p>
+                        <p className="text-lg font-semibold">{loan.remainingMonths}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <Badge className={getStatusColor(loan.status)}>
-                        {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
-                      </Badge>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Repayment Progress</span>
+                        <span>{calculateProgress(loan.originalAmount, loan.currentBalance).toFixed(1)}% paid</span>
+                      </div>
+                      <Progress 
+                        value={calculateProgress(loan.originalAmount, loan.currentBalance)} 
+                        className="h-2"
+                      />
+                      <div className="flex justify-between text-sm text-gray-500">
+                        <span>₹{(loan.originalAmount - loan.currentBalance).toLocaleString()} paid</span>
+                        <span>₹{loan.currentBalance.toLocaleString()} remaining</span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center mt-4">
+                      <div className="flex items-center space-x-2">
+                        {loan.nextDueDate && new Date(loan.nextDueDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) ? (
+                          <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        )}
+                        <span className="text-sm text-gray-500">
+                          {loan.nextDueDate && new Date(loan.nextDueDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
+                            ? 'Due soon' 
+                            : 'On track'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleMakePayment(loan.id)}
+                        >
+                          Make Payment
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewDetails(loan.id)}
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Loan Insights */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold">Payment Calendar</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-blue-900">Personal Loan - HDFC</p>
+                        <p className="text-sm text-blue-700">Due: July 25, 2024</p>
+                      </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-500">Next Due</p>
-                        <p className="font-medium">{loan.nextDueDate}</p>
+                        <p className="font-semibold text-blue-900">₹12,500</p>
+                        <Badge className="bg-blue-100 text-blue-800 text-xs">Due in 3 days</Badge>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Outstanding</p>
-                      <p className="text-lg font-semibold">₹{loan.currentBalance.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Monthly EMI</p>
-                      <p className="text-lg font-semibold">₹{loan.monthlyEmi.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Interest Rate</p>
-                      <p className="text-lg font-semibold">{loan.interestRate}%</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Remaining Months</p>
-                      <p className="text-lg font-semibold">{loan.remainingMonths}</p>
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-green-900">Student Loan - SBI</p>
+                        <p className="text-sm text-green-700">Due: July 28, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-green-900">₹8,200</p>
+                        <Badge className="bg-green-100 text-green-800 text-xs">Due in 6 days</Badge>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Repayment Progress</span>
-                      <span>{calculateProgress(loan.originalAmount, loan.currentBalance).toFixed(1)}% paid</span>
-                    </div>
-                    <Progress 
-                      value={calculateProgress(loan.originalAmount, loan.currentBalance)} 
-                      className="h-2"
-                    />
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>₹{(loan.originalAmount - loan.currentBalance).toLocaleString()} paid</span>
-                      <span>₹{loan.currentBalance.toLocaleString()} remaining</span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center mt-4">
-                    <div className="flex items-center space-x-2">
-                      {loan.nextDueDate && new Date(loan.nextDueDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) ? (
-                        <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                      )}
-                      <span className="text-sm text-gray-500">
-                        {loan.nextDueDate && new Date(loan.nextDueDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
-                          ? 'Due soon' 
-                          : 'On track'
-                        }
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleMakePayment(loan.id)}
-                      >
-                        Make Payment
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleViewDetails(loan.id)}
-                      >
-                        View Details
-                      </Button>
+                  <div className="p-4 bg-red-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-red-900">Credit Card - ICICI</p>
+                        <p className="text-sm text-red-700">Due: July 30, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-red-900">₹3,500</p>
+                        <Badge className="bg-red-100 text-red-800 text-xs">Due in 8 days</Badge>
+                      </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Loan Insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold">Payment Calendar</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-blue-900 dark:text-blue-100">Personal Loan - HDFC</p>
-                      <p className="text-sm text-blue-700 dark:text-blue-200">Due: July 25, 2024</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-blue-900 dark:text-blue-100">₹12,500</p>
-                      <Badge className="bg-blue-100 text-blue-800 text-xs">Due in 3 days</Badge>
-                    </div>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold">Debt Management Tips</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-purple-50 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 mb-2">💡 Prioritize High Interest</h4>
+                    <p className="text-sm text-purple-700">
+                      Focus on paying off your credit card debt first (18% interest rate) to save money.
+                    </p>
+                  </div>
+                
+                  <div className="p-4 bg-indigo-50 rounded-lg">
+                    <h4 className="font-semibold text-indigo-900 mb-2">📈 Extra Payment Impact</h4>
+                    <p className="text-sm text-indigo-700">
+                      Adding ₹2,000 extra monthly to your personal loan can save ₹15,000 in interest.
+                    </p>
+                  </div>
+                
+                  <div className="p-4 bg-pink-50 rounded-lg">
+                    <h4 className="font-semibold text-pink-900 mb-2">🎯 Debt-Free Goal</h4>
+                    <p className="text-sm text-pink-700">
+                      At current rate, you'll be debt-free in 4.5 years. Great progress!
+                    </p>
                   </div>
                 </div>
-
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-green-900 dark:text-green-100">Student Loan - SBI</p>
-                      <p className="text-sm text-green-700 dark:text-green-200">Due: July 28, 2024</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-green-900 dark:text-green-100">₹8,200</p>
-                      <Badge className="bg-green-100 text-green-800 text-xs">Due in 6 days</Badge>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-red-900 dark:text-red-100">Credit Card - ICICI</p>
-                      <p className="text-sm text-red-700 dark:text-red-200">Due: July 30, 2024</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-red-900 dark:text-red-100">₹3,500</p>
-                      <Badge className="bg-red-100 text-red-800 text-xs">Due in 8 days</Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold">Debt Management Tips</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">💡 Prioritize High Interest</h4>
-                  <p className="text-sm text-purple-700 dark:text-purple-200">
-                    Focus on paying off your credit card debt first (18% interest rate) to save money.
-                  </p>
-                </div>
-              
-                <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-                  <h4 className="font-semibold text-indigo-900 dark:text-indigo-100 mb-2">📈 Extra Payment Impact</h4>
-                  <p className="text-sm text-indigo-700 dark:text-indigo-200">
-                    Adding ₹2,000 extra monthly to your personal loan can save ₹15,000 in interest.
-                  </p>
-                </div>
-              
-                <div className="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-lg">
-                  <h4 className="font-semibold text-pink-900 dark:text-pink-100 mb-2">🎯 Debt-Free Goal</h4>
-                  <p className="text-sm text-pink-700 dark:text-pink-200">
-                    At current rate, you'll be debt-free in 4.5 years. Great progress!
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
 
-      <EMICalculator 
-        isOpen={showEMICalculator}
-        onClose={() => setShowEMICalculator(false)}
-      />
-    </>
+        {/* Modals */}
+        <EMICalculator 
+          isOpen={showEMICalculator}
+          onClose={() => setShowEMICalculator(false)}
+        />
+        
+        <AddLoanModal 
+          isOpen={showAddLoan}
+          onClose={() => setShowAddLoan(false)}
+        />
+        
+        <PaymentModal 
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          loan={selectedLoan}
+        />
+        
+        <LoanDetailsModal 
+          isOpen={showDetailsModal}
+          onClose={() => setShowDetailsModal(false)}
+          loan={selectedLoan}
+        />
+      </div>
+    </FinanceProvider>
   );
 };
 
-export default LoanManagement;
+export default function App() {
+  return (
+    <FinanceProvider>
+      <LoanManagement />
+    </FinanceProvider>
+  );
+}

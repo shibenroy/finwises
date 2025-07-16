@@ -271,10 +271,7 @@ Credit is your ability to borrow money based on your track record of repaying de
    - Pay at least the minimum due
 
 2. **Keep Balances Low**
-   - Pay off credit cards monthly
-   - Don't max out credit cards
-   - Request credit limit increases
-
+   - Pay off cx
 3. **Monitor Your Credit Report**
    - Check annually at annualcreditreport.com
    - Dispute any errors immediately
