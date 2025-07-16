@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { saveToStorage, getFromStorage, STORAGE_KEYS } from '../utils/localStorage';
 
@@ -50,6 +49,14 @@ export interface Course {
   status: 'completed' | 'in-progress' | 'locked';
 }
 
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  target: number;
+  current: number;
+  color: string;
+}
+
 interface FinanceState {
   user: {
     name: string;
@@ -65,6 +72,7 @@ interface FinanceState {
   loans: Loan[];
   courses: Course[];
   achievements: string[];
+  savingsGoals: SavingsGoal[];
   userStats: {
     coursesCompleted: number;
     totalHours: number;
@@ -80,6 +88,7 @@ type FinanceAction =
   | { type: 'ADD_TRANSACTION'; payload: Transaction }
   | { type: 'UPDATE_BUDGET_CATEGORY'; payload: BudgetCategory }
   | { type: 'ADD_BUDGET_CATEGORY'; payload: BudgetCategory }
+  | { type: 'ADD_SAVINGS_GOAL'; payload: SavingsGoal }
   | { type: 'UPDATE_COURSE_PROGRESS'; payload: { courseId: string; progress: number } }
   | { type: 'MAKE_LOAN_PAYMENT'; payload: { loanId: string; amount: number } };
 
@@ -102,7 +111,34 @@ const defaultState: FinanceState = {
     { id: '5', name: 'Bills & Utilities', allocated: 4000, spent: 0, color: 'bg-yellow-500', icon: '💡' },
     { id: '6', name: 'Health & Fitness', allocated: 2500, spent: 0, color: 'bg-pink-500', icon: '⚕️' }
   ],
-  loans: [],
+  loans: [
+    {
+      id: '1',
+      type: 'Personal Loan',
+      bank: 'HDFC Bank',
+      originalAmount: 200000,
+      currentBalance: 150000,
+      monthlyEmi: 12500,
+      interestRate: 12.5,
+      remainingMonths: 15,
+      nextDueDate: '2024-07-25',
+      status: 'active',
+      color: 'bg-blue-500'
+    },
+    {
+      id: '2',
+      type: 'Student Loan',
+      bank: 'SBI',
+      originalAmount: 300000,
+      currentBalance: 180000,
+      monthlyEmi: 8200,
+      interestRate: 9.5,
+      remainingMonths: 24,
+      nextDueDate: '2024-07-28',
+      status: 'active',
+      color: 'bg-green-500'
+    }
+  ],
   courses: [
     { 
       id: '1', 
@@ -151,6 +187,7 @@ const defaultState: FinanceState = {
     }
   ],
   achievements: [],
+  savingsGoals: [],
   userStats: {
     coursesCompleted: 0,
     totalHours: 0,
@@ -222,6 +259,14 @@ const financeReducer = (state: FinanceState, action: FinanceAction): FinanceStat
       saveToStorage(STORAGE_KEYS.BUDGET_CATEGORIES, newState.budgetCategories);
       return newState;
     
+    case 'ADD_SAVINGS_GOAL':
+      newState = {
+        ...state,
+        savingsGoals: [...state.savingsGoals, action.payload]
+      };
+      saveToStorage(STORAGE_KEYS.SAVINGS_GOALS, newState.savingsGoals);
+      return newState;
+    
     case 'UPDATE_COURSE_PROGRESS':
       newState = {
         ...state,
@@ -267,6 +312,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     const savedLoans = getFromStorage(STORAGE_KEYS.LOANS, defaultState.loans);
     const savedCourses = getFromStorage(STORAGE_KEYS.COURSES, defaultState.courses);
     const savedAchievements = getFromStorage(STORAGE_KEYS.ACHIEVEMENTS, defaultState.achievements);
+    const savedSavingsGoals = getFromStorage(STORAGE_KEYS.SAVINGS_GOALS, defaultState.savingsGoals);
     const savedUserStats = getFromStorage(STORAGE_KEYS.USER_STATS, defaultState.userStats);
 
     const initialState: FinanceState = {
@@ -276,6 +322,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       loans: savedLoans,
       courses: savedCourses,
       achievements: savedAchievements,
+      savingsGoals: savedSavingsGoals,
       userStats: savedUserStats
     };
 

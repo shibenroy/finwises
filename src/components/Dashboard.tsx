@@ -6,9 +6,6 @@ import {
   Wallet, 
   Target, 
   Gift, 
-  Zap,
-  ArrowUpRight,
-  ArrowDownRight,
   Plus,
   Eye,
   EyeOff
@@ -19,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useFinance } from '@/contexts/FinanceContext';
 import TransactionModal from './TransactionModal';
+import SavingsGoalModal from './SavingsGoalModal';
 
 const Dashboard = () => {
   const { state, dispatch } = useFinance();
@@ -26,6 +24,7 @@ const Dashboard = () => {
     isOpen: false,
     type: 'income'
   });
+  const [showSavingsGoalModal, setShowSavingsGoalModal] = useState(false);
 
   // Calculate total balance from savings and net transactions
   const totalBalance = useMemo(() => {
@@ -94,12 +93,6 @@ const Dashboard = () => {
       trend: 'up',
       color: 'bg-purple-500'
     }
-  ];
-
-  const savingsGoals = [
-    { name: 'Emergency Fund', current: Math.floor(totalBalance * 0.3), target: state.user.monthlyIncome * 6, color: 'bg-blue-500' },
-    { name: 'Vacation', current: Math.floor(totalBalance * 0.2), target: 50000, color: 'bg-green-500' },
-    { name: 'Investment', current: Math.floor(totalBalance * 0.1), target: 100000, color: 'bg-purple-500' },
   ];
 
   return (
@@ -186,8 +179,8 @@ const Dashboard = () => {
                           transaction.type === 'income' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
                         }`}>
                           {transaction.type === 'income' ? 
-                            <ArrowUpRight className="w-5 h-5" /> : 
-                            <ArrowDownRight className="w-5 h-5" />
+                            <TrendingUp className="w-5 h-5" /> : 
+                            <TrendingDown className="w-5 h-5" />
                           }
                         </div>
                         <div>
@@ -217,7 +210,11 @@ const Dashboard = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle className="text-xl font-bold">Savings Goals</CardTitle>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowSavingsGoalModal(true)}
+                >
                   <Plus className="w-4 h-4 mr-1" />
                   Add Goal
                 </Button>
@@ -225,24 +222,30 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {savingsGoals.map((goal, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">{goal.name}</span>
-                      <span className="text-sm text-gray-500">
-                        ₹{goal.current.toLocaleString()} / ₹{goal.target.toLocaleString()}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={Math.min((goal.current / goal.target) * 100, 100)} 
-                      className="h-2"
-                    />
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>{Math.min(Math.round((goal.current / goal.target) * 100), 100)}% completed</span>
-                      <span>₹{Math.max(goal.target - goal.current, 0).toLocaleString()} remaining</span>
-                    </div>
+                {state.savingsGoals.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No savings goals yet. Add your first goal to get started!
                   </div>
-                ))}
+                ) : (
+                  state.savingsGoals.map((goal) => (
+                    <div key={goal.id} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{goal.name}</span>
+                        <span className="text-sm text-gray-500">
+                          ₹{goal.current.toLocaleString()} / ₹{goal.target.toLocaleString()}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={Math.min((goal.current / goal.target) * 100, 100)} 
+                        className="h-2"
+                      />
+                      <div className="flex justify-between text-sm text-gray-500">
+                        <span>{Math.min(Math.round((goal.current / goal.target) * 100), 100)}% completed</span>
+                        <span>₹{Math.max(goal.target - goal.current, 0).toLocaleString()} remaining</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -254,7 +257,7 @@ const Dashboard = () => {
             <CardTitle className="text-xl font-bold">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <Button 
                 className="h-20 flex-col space-y-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
                 onClick={() => openTransactionModal('income')}
@@ -269,13 +272,12 @@ const Dashboard = () => {
                 <Target className="w-6 h-6" />
                 <span>Add Expense</span>
               </Button>
-              <Button className="h-20 flex-col space-y-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
+              <Button 
+                className="h-20 flex-col space-y-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                onClick={() => setShowSavingsGoalModal(true)}
+              >
                 <Gift className="w-6 h-6" />
                 <span>Set Goal</span>
-              </Button>
-              <Button className="h-20 flex-col space-y-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700">
-                <Zap className="w-6 h-6" />
-                <span>Invest</span>
               </Button>
             </div>
           </CardContent>
@@ -286,6 +288,11 @@ const Dashboard = () => {
         isOpen={transactionModal.isOpen}
         onClose={closeTransactionModal}
         type={transactionModal.type}
+      />
+
+      <SavingsGoalModal 
+        isOpen={showSavingsGoalModal}
+        onClose={() => setShowSavingsGoalModal(false)}
       />
     </>
   );

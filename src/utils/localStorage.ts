@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   LOANS: 'financeWise_loans',
   COURSES: 'financeWise_courses',
   ACHIEVEMENTS: 'financeWise_achievements',
+  SAVINGS_GOALS: 'financeWise_savingsGoals',
   USER_STATS: 'financeWise_userStats',
   ONBOARDING_COMPLETE: 'financeWise_onboardingComplete'
 };
