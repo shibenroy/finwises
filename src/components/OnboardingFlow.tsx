@@ -8,42 +8,31 @@ import {
   Wallet, 
   Target, 
   TrendingUp,
-  Shield,
-  Smartphone,
-  Mail,
-  Eye,
-  EyeOff
+  Calendar
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
 interface OnboardingFlowProps {
-  onComplete: () => void;
+  onComplete: (userData: any) => void;
 }
 
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
-    email: '',
-    phone: '',
-    password: '',
     age: '',
-    profession: '',
     monthlyIncome: '',
     currentSavings: '',
-    financialGoals: [] as string[],
-    riskTolerance: ''
+    profession: '',
+    financialGoals: [] as string[]
   });
 
   const steps = [
     { id: 'welcome', title: 'Welcome', icon: '👋' },
-    { id: 'signup', title: 'Sign Up', icon: '📝' },
     { id: 'personal', title: 'Personal Info', icon: '👤' },
     { id: 'financial', title: 'Financial Info', icon: '💰' },
     { id: 'goals', title: 'Goals', icon: '🎯' },
@@ -58,12 +47,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const financialGoals = [
     'Build Emergency Fund', 'Save for Vacation', 'Buy a House', 'Start Investing',
     'Pay Off Debt', 'Retirement Planning', 'Start a Business', 'Education Fund'
-  ];
-
-  const riskTolerances = [
-    { value: 'conservative', label: 'Conservative', desc: 'Prefer stable, low-risk investments' },
-    { value: 'moderate', label: 'Moderate', desc: 'Balanced approach to risk and return' },
-    { value: 'aggressive', label: 'Aggressive', desc: 'Comfortable with higher risk for potentially higher returns' }
   ];
 
   const handleInputChange = (field: string, value: string) => {
@@ -83,7 +66,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      onComplete();
+      onComplete(formData);
     }
   };
 
@@ -126,70 +109,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
           </div>
         );
 
-      case 'signup':
-        return (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Create Your Account</h2>
-              <p className="text-gray-600 dark:text-gray-400">Join thousands of young Indians managing their finances</p>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email Address</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="phone">Phone Number</Label>
-                <div className="relative">
-                  <Smartphone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+91 98765 43210"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Shield className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Create a strong password"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    className="pl-10 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
       case 'personal':
         return (
           <div className="space-y-6">
@@ -216,13 +135,17 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
               
               <div>
                 <Label htmlFor="age">Age</Label>
-                <Input
-                  id="age"
-                  type="number"
-                  placeholder="25"
-                  value={formData.age}
-                  onChange={(e) => handleInputChange('age', e.target.value)}
-                />
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="age"
+                    type="number"
+                    placeholder="25"
+                    value={formData.age}
+                    onChange={(e) => handleInputChange('age', e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
               
               <div>
@@ -274,25 +197,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
                   onChange={(e) => handleInputChange('currentSavings', e.target.value)}
                 />
               </div>
-              
-              <div>
-                <Label>Risk Tolerance</Label>
-                <div className="space-y-2 mt-2">
-                  {riskTolerances.map((risk) => (
-                    <Button
-                      key={risk.value}
-                      variant={formData.riskTolerance === risk.value ? "default" : "outline"}
-                      onClick={() => handleInputChange('riskTolerance', risk.value)}
-                      className="w-full justify-start text-left"
-                    >
-                      <div>
-                        <div className="font-medium">{risk.label}</div>
-                        <div className="text-sm text-gray-500">{risk.desc}</div>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         );
@@ -338,7 +242,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
               Welcome to your financial journey, {formData.fullName}! Your personalized dashboard is ready.
             </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Next Steps</h3>
                 <ul className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
@@ -353,14 +257,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
                   {formData.financialGoals.slice(0, 3).map((goal, index) => (
                     <div key={index}>✓ {goal}</div>
                   ))}
-                </div>
-              </div>
-              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                <h3 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">Resources</h3>
-                <div className="text-sm text-purple-700 dark:text-purple-200 space-y-1">
-                  <div>📚 Beginner courses</div>
-                  <div>💡 Daily tips</div>
-                  <div>🎯 Goal tracking</div>
                 </div>
               </div>
             </div>

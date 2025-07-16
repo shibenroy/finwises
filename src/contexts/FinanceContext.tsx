@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+
+import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import { saveToStorage, getFromStorage, STORAGE_KEYS } from '../utils/localStorage';
 
 export interface Transaction {
   id: string;
@@ -51,9 +53,11 @@ export interface Course {
 interface FinanceState {
   user: {
     name: string;
-    totalBalance: number;
+    age: number;
+    profession: string;
     monthlyIncome: number;
-    monthlyExpenses: number;
+    currentSavings: number;
+    financialGoals: string[];
     showBalance: boolean;
   };
   transactions: Transaction[];
@@ -70,64 +74,35 @@ interface FinanceState {
 }
 
 type FinanceAction = 
+  | { type: 'INITIALIZE_STATE'; payload: FinanceState }
+  | { type: 'SET_USER_DATA'; payload: Partial<FinanceState['user']> }
   | { type: 'TOGGLE_BALANCE_VISIBILITY' }
   | { type: 'ADD_TRANSACTION'; payload: Transaction }
   | { type: 'UPDATE_BUDGET_CATEGORY'; payload: BudgetCategory }
   | { type: 'ADD_BUDGET_CATEGORY'; payload: BudgetCategory }
   | { type: 'UPDATE_COURSE_PROGRESS'; payload: { courseId: string; progress: number } }
-  | { type: 'SET_USER_DATA'; payload: Partial<FinanceState['user']> }
   | { type: 'MAKE_LOAN_PAYMENT'; payload: { loanId: string; amount: number } };
 
-const initialState: FinanceState = {
+const defaultState: FinanceState = {
   user: {
-    name: 'Arjun',
-    totalBalance: 245680,
-    monthlyIncome: 65000,
-    monthlyExpenses: 18340,
+    name: '',
+    age: 0,
+    profession: '',
+    monthlyIncome: 0,
+    currentSavings: 0,
+    financialGoals: [],
     showBalance: true
   },
-  transactions: [
-    { id: '1', type: 'expense', amount: 425, description: 'Food Delivery', category: 'Food', date: '2024-01-15' },
-    { id: '2', type: 'income', amount: 12000, description: 'Freelance Payment', category: 'Income', date: '2024-01-14' },
-    { id: '3', type: 'expense', amount: 180, description: 'Uber Ride', category: 'Transport', date: '2024-01-13' },
-    { id: '4', type: 'expense', amount: 799, description: 'Netflix Subscription', category: 'Entertainment', date: '2024-01-12' }
-  ],
+  transactions: [],
   budgetCategories: [
-    { id: '1', name: 'Food & Dining', allocated: 8000, spent: 6500, color: 'bg-red-500', icon: '🍽️' },
-    { id: '2', name: 'Transportation', allocated: 3000, spent: 3200, color: 'bg-blue-500', icon: '🚗' },
-    { id: '3', name: 'Entertainment', allocated: 2000, spent: 1800, color: 'bg-purple-500', icon: '🎬' },
-    { id: '4', name: 'Shopping', allocated: 5000, spent: 4200, color: 'bg-green-500', icon: '🛍️' },
-    { id: '5', name: 'Bills & Utilities', allocated: 4000, spent: 3800, color: 'bg-yellow-500', icon: '💡' },
-    { id: '6', name: 'Health & Fitness', allocated: 2500, spent: 1900, color: 'bg-pink-500', icon: '⚕️' }
+    { id: '1', name: 'Food & Dining', allocated: 8000, spent: 0, color: 'bg-red-500', icon: '🍽️' },
+    { id: '2', name: 'Transportation', allocated: 3000, spent: 0, color: 'bg-blue-500', icon: '🚗' },
+    { id: '3', name: 'Entertainment', allocated: 2000, spent: 0, color: 'bg-purple-500', icon: '🎬' },
+    { id: '4', name: 'Shopping', allocated: 5000, spent: 0, color: 'bg-green-500', icon: '🛍️' },
+    { id: '5', name: 'Bills & Utilities', allocated: 4000, spent: 0, color: 'bg-yellow-500', icon: '💡' },
+    { id: '6', name: 'Health & Fitness', allocated: 2500, spent: 0, color: 'bg-pink-500', icon: '⚕️' }
   ],
-  loans: [
-    {
-      id: '1',
-      type: 'Personal Loan',
-      bank: 'HDFC Bank',
-      originalAmount: 200000,
-      currentBalance: 145000,
-      monthlyEmi: 12500,
-      interestRate: 10.5,
-      remainingMonths: 14,
-      nextDueDate: '2024-07-25',
-      status: 'active',
-      color: 'bg-blue-500'
-    },
-    {
-      id: '2',
-      type: 'Student Loan',
-      bank: 'SBI',
-      originalAmount: 500000,
-      currentBalance: 380000,
-      monthlyEmi: 8200,
-      interestRate: 8.5,
-      remainingMonths: 56,
-      nextDueDate: '2024-07-28',
-      status: 'active',
-      color: 'bg-green-500'
-    }
-  ],
+  loans: [],
   courses: [
     { 
       id: '1', 
@@ -135,10 +110,10 @@ const initialState: FinanceState = {
       description: 'Learn the fundamentals of creating and maintaining a budget',
       duration: '2 hours',
       level: 'Beginner',
-      progress: 75, 
+      progress: 0, 
       completed: false, 
       modules: 6, 
-      completedModules: 4,
+      completedModules: 0,
       rating: 4.8,
       students: 1250,
       thumbnail: '💰',
@@ -150,10 +125,10 @@ const initialState: FinanceState = {
       description: 'Understanding stocks, bonds, and mutual funds',
       duration: '3 hours',
       level: 'Intermediate',
-      progress: 30, 
+      progress: 0, 
       completed: false, 
       modules: 8, 
-      completedModules: 2,
+      completedModules: 0,
       rating: 4.9,
       students: 980,
       thumbnail: '📈',
@@ -165,58 +140,90 @@ const initialState: FinanceState = {
       description: 'How to build and maintain an excellent credit score',
       duration: '1.5 hours',
       level: 'Beginner',
-      progress: 100, 
-      completed: true, 
+      progress: 0, 
+      completed: false, 
       modules: 4, 
-      completedModules: 4,
+      completedModules: 0,
       rating: 4.7,
       students: 2100,
       thumbnail: '🏆',
-      status: 'completed'
+      status: 'in-progress'
     }
   ],
-  achievements: ['first-course', 'quiz-master', 'budgeting-pro', 'credit-expert'],
+  achievements: [],
   userStats: {
-    coursesCompleted: 3,
-    totalHours: 12.5,
-    streakDays: 7,
-    points: 2450
+    coursesCompleted: 0,
+    totalHours: 0,
+    streakDays: 0,
+    points: 0
   }
 };
 
 const financeReducer = (state: FinanceState, action: FinanceAction): FinanceState => {
+  let newState: FinanceState;
+
   switch (action.type) {
+    case 'INITIALIZE_STATE':
+      return action.payload;
+    
+    case 'SET_USER_DATA':
+      newState = {
+        ...state,
+        user: { ...state.user, ...action.payload }
+      };
+      saveToStorage(STORAGE_KEYS.USER_DATA, newState.user);
+      return newState;
+    
     case 'TOGGLE_BALANCE_VISIBILITY':
-      return {
+      newState = {
         ...state,
         user: {
           ...state.user,
           showBalance: !state.user.showBalance
         }
       };
+      saveToStorage(STORAGE_KEYS.USER_DATA, newState.user);
+      return newState;
     
     case 'ADD_TRANSACTION':
-      return {
+      newState = {
         ...state,
         transactions: [action.payload, ...state.transactions]
       };
+      saveToStorage(STORAGE_KEYS.TRANSACTIONS, newState.transactions);
+      
+      // Update budget categories spent amount
+      const updatedCategories = state.budgetCategories.map(cat => {
+        if (cat.name.toLowerCase().includes(action.payload.category.toLowerCase()) && action.payload.type === 'expense') {
+          return { ...cat, spent: cat.spent + action.payload.amount };
+        }
+        return cat;
+      });
+      
+      newState.budgetCategories = updatedCategories;
+      saveToStorage(STORAGE_KEYS.BUDGET_CATEGORIES, newState.budgetCategories);
+      return newState;
     
     case 'UPDATE_BUDGET_CATEGORY':
-      return {
+      newState = {
         ...state,
         budgetCategories: state.budgetCategories.map(cat =>
           cat.id === action.payload.id ? action.payload : cat
         )
       };
+      saveToStorage(STORAGE_KEYS.BUDGET_CATEGORIES, newState.budgetCategories);
+      return newState;
     
     case 'ADD_BUDGET_CATEGORY':
-      return {
+      newState = {
         ...state,
         budgetCategories: [...state.budgetCategories, action.payload]
       };
+      saveToStorage(STORAGE_KEYS.BUDGET_CATEGORIES, newState.budgetCategories);
+      return newState;
     
     case 'UPDATE_COURSE_PROGRESS':
-      return {
+      newState = {
         ...state,
         courses: state.courses.map(course =>
           course.id === action.payload.courseId
@@ -224,15 +231,11 @@ const financeReducer = (state: FinanceState, action: FinanceAction): FinanceStat
             : course
         )
       };
-    
-    case 'SET_USER_DATA':
-      return {
-        ...state,
-        user: { ...state.user, ...action.payload }
-      };
+      saveToStorage(STORAGE_KEYS.COURSES, newState.courses);
+      return newState;
     
     case 'MAKE_LOAN_PAYMENT':
-      return {
+      newState = {
         ...state,
         loans: state.loans.map(loan =>
           loan.id === action.payload.loanId
@@ -240,6 +243,8 @@ const financeReducer = (state: FinanceState, action: FinanceAction): FinanceStat
             : loan
         )
       };
+      saveToStorage(STORAGE_KEYS.LOANS, newState.loans);
+      return newState;
     
     default:
       return state;
@@ -252,8 +257,31 @@ const FinanceContext = createContext<{
 } | null>(null);
 
 export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(financeReducer, initialState);
-  
+  const [state, dispatch] = useReducer(financeReducer, defaultState);
+
+  useEffect(() => {
+    // Load data from localStorage on mount
+    const savedUser = getFromStorage(STORAGE_KEYS.USER_DATA, defaultState.user);
+    const savedTransactions = getFromStorage(STORAGE_KEYS.TRANSACTIONS, defaultState.transactions);
+    const savedBudgetCategories = getFromStorage(STORAGE_KEYS.BUDGET_CATEGORIES, defaultState.budgetCategories);
+    const savedLoans = getFromStorage(STORAGE_KEYS.LOANS, defaultState.loans);
+    const savedCourses = getFromStorage(STORAGE_KEYS.COURSES, defaultState.courses);
+    const savedAchievements = getFromStorage(STORAGE_KEYS.ACHIEVEMENTS, defaultState.achievements);
+    const savedUserStats = getFromStorage(STORAGE_KEYS.USER_STATS, defaultState.userStats);
+
+    const initialState: FinanceState = {
+      user: savedUser,
+      transactions: savedTransactions,
+      budgetCategories: savedBudgetCategories,
+      loans: savedLoans,
+      courses: savedCourses,
+      achievements: savedAchievements,
+      userStats: savedUserStats
+    };
+
+    dispatch({ type: 'INITIALIZE_STATE', payload: initialState });
+  }, []);
+
   return (
     <FinanceContext.Provider value={{ state, dispatch }}>
       {children}

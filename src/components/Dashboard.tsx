@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -27,6 +27,32 @@ const Dashboard = () => {
     type: 'income'
   });
 
+  // Calculate total balance from savings and net transactions
+  const totalBalance = useMemo(() => {
+    const netTransactions = state.transactions.reduce((sum, transaction) => {
+      return transaction.type === 'income' 
+        ? sum + transaction.amount 
+        : sum - transaction.amount;
+    }, 0);
+    
+    return state.user.currentSavings + netTransactions;
+  }, [state.user.currentSavings, state.transactions]);
+
+  // Calculate monthly expenses from transactions
+  const monthlyExpenses = useMemo(() => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
+    return state.transactions
+      .filter(t => {
+        const transactionDate = new Date(t.date);
+        return t.type === 'expense' && 
+               transactionDate.getMonth() === currentMonth && 
+               transactionDate.getFullYear() === currentYear;
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [state.transactions]);
+
   const toggleBalanceVisibility = () => {
     dispatch({ type: 'TOGGLE_BALANCE_VISIBILITY' });
   };
@@ -42,14 +68,14 @@ const Dashboard = () => {
   const quickStats = [
     { 
       title: 'Total Balance', 
-      amount: `₹${state.user.totalBalance.toLocaleString()}`, 
+      amount: `₹${totalBalance.toLocaleString()}`, 
       change: '+12.5%', 
       trend: 'up',
       color: 'bg-green-500'
     },
     { 
       title: 'Monthly Expenses', 
-      amount: `₹${state.user.monthlyExpenses.toLocaleString()}`, 
+      amount: `₹${monthlyExpenses.toLocaleString()}`, 
       change: '-3.2%', 
       trend: 'down',
       color: 'bg-red-500'
@@ -63,7 +89,7 @@ const Dashboard = () => {
     },
     { 
       title: 'Savings Rate', 
-      amount: `${Math.round(((state.user.monthlyIncome - state.user.monthlyExpenses) / state.user.monthlyIncome) * 100)}%`, 
+      amount: `${state.user.monthlyIncome > 0 ? Math.round(((state.user.monthlyIncome - monthlyExpenses) / state.user.monthlyIncome) * 100) : 0}%`, 
       change: '+2.3%', 
       trend: 'up',
       color: 'bg-purple-500'
@@ -71,9 +97,9 @@ const Dashboard = () => {
   ];
 
   const savingsGoals = [
-    { name: 'Emergency Fund', current: 34000, target: 50000, color: 'bg-blue-500' },
-    { name: 'Vacation', current: 15000, target: 25000, color: 'bg-green-500' },
-    { name: 'Laptop', current: 45000, target: 80000, color: 'bg-purple-500' },
+    { name: 'Emergency Fund', current: Math.floor(totalBalance * 0.3), target: state.user.monthlyIncome * 6, color: 'bg-blue-500' },
+    { name: 'Vacation', current: Math.floor(totalBalance * 0.2), target: 50000, color: 'bg-green-500' },
+    { name: 'Investment', current: Math.floor(totalBalance * 0.1), target: 100000, color: 'bg-purple-500' },
   ];
 
   return (
@@ -83,7 +109,7 @@ const Dashboard = () => {
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold mb-2">Good morning, {state.user.name}! 👋</h1>
+              <h1 className="text-2xl font-bold mb-2">Good morning, {state.user.name || 'User'}! 👋</h1>
               <p className="text-blue-100">Your financial journey is looking great today</p>
             </div>
             <div className="text-right">
@@ -99,7 +125,7 @@ const Dashboard = () => {
                 </Button>
               </div>
               <div className="text-3xl font-bold">
-                {state.user.showBalance ? `₹${state.user.totalBalance.toLocaleString()}` : '₹••••••'}
+                {state.user.showBalance ? `₹${totalBalance.toLocaleString()}` : '₹••••••'}
               </div>
             </div>
           </div>
@@ -148,34 +174,40 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {state.transactions.slice(0, 4).map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        transaction.type === 'income' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                      }`}>
-                        {transaction.type === 'income' ? 
-                          <ArrowUpRight className="w-5 h-5" /> : 
-                          <ArrowDownRight className="w-5 h-5" />
-                        }
-                      </div>
-                      <div>
-                        <p className="font-medium">{transaction.description}</p>
-                        <p className="text-sm text-gray-500">{transaction.date}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className={`font-semibold ${
-                        transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {transaction.type === 'income' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
-                      </p>
-                      <Badge variant="secondary" className="text-xs">
-                        {transaction.category}
-                      </Badge>
-                    </div>
+                {state.transactions.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No transactions yet. Add your first transaction to get started!
                   </div>
-                ))}
+                ) : (
+                  state.transactions.slice(0, 4).map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          transaction.type === 'income' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                        }`}>
+                          {transaction.type === 'income' ? 
+                            <ArrowUpRight className="w-5 h-5" /> : 
+                            <ArrowDownRight className="w-5 h-5" />
+                          }
+                        </div>
+                        <div>
+                          <p className="font-medium">{transaction.description}</p>
+                          <p className="text-sm text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold ${
+                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {transaction.type === 'income' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
+                        </p>
+                        <Badge variant="secondary" className="text-xs">
+                          {transaction.category}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -202,12 +234,12 @@ const Dashboard = () => {
                       </span>
                     </div>
                     <Progress 
-                      value={(goal.current / goal.target) * 100} 
+                      value={Math.min((goal.current / goal.target) * 100, 100)} 
                       className="h-2"
                     />
                     <div className="flex justify-between text-sm text-gray-500">
-                      <span>{Math.round((goal.current / goal.target) * 100)}% completed</span>
-                      <span>₹{(goal.target - goal.current).toLocaleString()} remaining</span>
+                      <span>{Math.min(Math.round((goal.current / goal.target) * 100), 100)}% completed</span>
+                      <span>₹{Math.max(goal.target - goal.current, 0).toLocaleString()} remaining</span>
                     </div>
                   </div>
                 ))}
