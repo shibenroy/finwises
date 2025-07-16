@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 
 export interface Transaction {
@@ -30,15 +29,23 @@ export interface Loan {
   remainingMonths: number;
   nextDueDate: string;
   status: 'active' | 'paid' | 'overdue';
+  color: string;
 }
 
 export interface Course {
   id: string;
   title: string;
+  description: string;
+  duration: string;
+  level: 'Beginner' | 'Intermediate' | 'Advanced';
   progress: number;
   completed: boolean;
   modules: number;
   completedModules: number;
+  rating: number;
+  students: number;
+  thumbnail: string;
+  status: 'completed' | 'in-progress' | 'locked';
 }
 
 interface FinanceState {
@@ -104,7 +111,8 @@ const initialState: FinanceState = {
       interestRate: 10.5,
       remainingMonths: 14,
       nextDueDate: '2024-07-25',
-      status: 'active'
+      status: 'active',
+      color: 'bg-blue-500'
     },
     {
       id: '2',
@@ -116,13 +124,56 @@ const initialState: FinanceState = {
       interestRate: 8.5,
       remainingMonths: 56,
       nextDueDate: '2024-07-28',
-      status: 'active'
+      status: 'active',
+      color: 'bg-green-500'
     }
   ],
   courses: [
-    { id: '1', title: 'Budgeting Basics', progress: 75, completed: false, modules: 6, completedModules: 4 },
-    { id: '2', title: 'Investment Fundamentals', progress: 30, completed: false, modules: 8, completedModules: 2 },
-    { id: '3', title: 'Credit Score Mastery', progress: 100, completed: true, modules: 4, completedModules: 4 }
+    { 
+      id: '1', 
+      title: 'Budgeting Basics', 
+      description: 'Learn the fundamentals of creating and maintaining a budget',
+      duration: '2 hours',
+      level: 'Beginner',
+      progress: 75, 
+      completed: false, 
+      modules: 6, 
+      completedModules: 4,
+      rating: 4.8,
+      students: 1250,
+      thumbnail: '💰',
+      status: 'in-progress'
+    },
+    { 
+      id: '2', 
+      title: 'Investment Fundamentals', 
+      description: 'Understanding stocks, bonds, and mutual funds',
+      duration: '3 hours',
+      level: 'Intermediate',
+      progress: 30, 
+      completed: false, 
+      modules: 8, 
+      completedModules: 2,
+      rating: 4.9,
+      students: 980,
+      thumbnail: '📈',
+      status: 'in-progress'
+    },
+    { 
+      id: '3', 
+      title: 'Credit Score Mastery', 
+      description: 'How to build and maintain an excellent credit score',
+      duration: '1.5 hours',
+      level: 'Beginner',
+      progress: 100, 
+      completed: true, 
+      modules: 4, 
+      completedModules: 4,
+      rating: 4.7,
+      students: 2100,
+      thumbnail: '🏆',
+      status: 'completed'
+    }
   ],
   achievements: ['first-course', 'quiz-master', 'budgeting-pro', 'credit-expert'],
   userStats: {
