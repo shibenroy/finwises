@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   TrendingUp, 
@@ -68,29 +67,24 @@ const Dashboard = () => {
     { 
       title: 'Total Balance', 
       amount: `₹${totalBalance.toLocaleString()}`, 
-      change: '+12.5%', 
-      trend: 'up',
       color: 'bg-green-500'
     },
     { 
       title: 'Monthly Expenses', 
       amount: `₹${monthlyExpenses.toLocaleString()}`, 
-      change: '-3.2%', 
-      trend: 'down',
+    
       color: 'bg-red-500'
     },
     { 
       title: 'Monthly Income', 
       amount: `₹${state.user.monthlyIncome.toLocaleString()}`, 
-      change: '+8.1%', 
-      trend: 'up',
+    
       color: 'bg-blue-500'
     },
     { 
       title: 'Savings Rate', 
       amount: `${state.user.monthlyIncome > 0 ? Math.round(((state.user.monthlyIncome - monthlyExpenses) / state.user.monthlyIncome) * 100) : 0}%`, 
-      change: '+2.3%', 
-      trend: 'up',
+   
       color: 'bg-purple-500'
     }
   ];
@@ -134,12 +128,8 @@ const Dashboard = () => {
                     <p className="text-sm text-gray-600 dark:text-gray-400">{stat.title}</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.amount}</p>
                     <div className="flex items-center space-x-1 mt-1">
-                      {stat.trend === 'up' ? (
-                        <TrendingUp className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 text-red-500" />
-                      )}
-                      <span className={`text-sm ${stat.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                      {/* Only show the change, no color logic for trend */}
+                      <span className="text-sm text-gray-500">
                         {stat.change}
                       </span>
                     </div>
@@ -192,8 +182,8 @@ const Dashboard = () => {
                         <p className={`font-semibold ${
                           transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {transaction.type === 'income' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
-                        </p>
+                          {transaction.type === 'income' ? '+' : '-'}₹{transaction.amount.toLocaleString()
+                        }</p>
                         <Badge variant="secondary" className="text-xs">
                           {transaction.category}
                         </Badge>

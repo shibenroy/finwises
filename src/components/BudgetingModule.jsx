@@ -109,14 +109,7 @@ const TabsTrigger = ({ children, value, selectedValue, onValueChange }) => (
 
 const BudgetingModule = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
-  const [categories, setCategories] = useState([
-    { name: 'Food & Dining', allocated: 8000, spent: 6500, icon: '🍽️', color: 'blue' },
-    { name: 'Transportation', allocated: 3000, spent: 3200, icon: '🚗', color: 'red' },
-    { name: 'Entertainment', allocated: 2000, spent: 1800, icon: '🎬', color: 'purple' },
-    { name: 'Shopping', allocated: 5000, spent: 4200, icon: '🛍️', color: 'green' },
-    { name: 'Bills & Utilities', allocated: 4000, spent: 3800, icon: '💡', color: 'blue' },
-    { name: 'Health & Fitness', allocated: 2500, spent: 1900, icon: '⚕️', color: 'purple' }
-  ]);
+  const [categories, setCategories] = useState([]);
 
   // Add these state variables for modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -208,12 +201,12 @@ const BudgetingModule = () => {
             title="Budget Used"
             value={
               <span>
-                {monthlyOverview.percentSpent.toFixed(1)}
+                {isNaN(monthlyOverview.percentSpent) ? '0.0' : monthlyOverview.percentSpent.toFixed(1)}
                 <span className="text-xl font-semibold ml-1 mb-0.5 align-baseline">%</span>
               </span>
             }
             Icon={PieChart}
-            color="purple"
+            color="blue" // Always blue, no color change
           />
         </div>
 
