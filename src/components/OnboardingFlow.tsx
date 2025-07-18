@@ -86,7 +86,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
             <div className="text-6xl mb-4">🚀</div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome to FinanceWise</h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Your personal finance companion designed specifically for young Indians. 
+              Your personal finance companion designed specifically for young generation. 
               Let's build your financial future together!
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
