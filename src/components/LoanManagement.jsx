@@ -219,14 +219,7 @@ const EMICalculator = ({ isOpen, onClose }) => {
                   <span>Monthly EMI:</span>
                   <span className="font-semibold">₹{emiResult.emi.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Total Amount:</span>
-                  <span className="font-semibold">₹{emiResult.totalAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Total Interest:</span>
-                  <span className="font-semibold">₹{emiResult.totalInterest.toLocaleString()}</span>
-                </div>
+                
               </div>
             </div>
           )}
@@ -703,29 +696,9 @@ const LoanManagement = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-yellow-400 to-yellow-600 dark:from-yellow-700 dark:to-yellow-900 border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-yellow-900 dark:text-yellow-700 text-sm">Total Interest</p>
-                  <p className="text-2xl font-bold text-yellow-900 dark:text-white">₹{loanSummary.totalInterest.toLocaleString()}</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-yellow-700 dark:text-yellow-200" />
-              </div>
-            </CardContent>
-          </Card>
+          
 
-          <Card className="bg-gradient-to-r from-purple-400 to-purple-600 dark:from-purple-700 dark:to-purple-900 border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-900 dark:text-purple-100 text-sm">Avg Interest Rate</p>
-                  <p className="text-2xl font-bold text-purple-900 dark:text-white">{loanSummary.avgInterestRate}%</p>
-                </div>
-                <Target className="w-8 h-8 text-purple-700 dark:text-purple-200" />
-              </div>
-            </CardContent>
-          </Card>
+          
         </div>
 
         {/* Loan Details */}

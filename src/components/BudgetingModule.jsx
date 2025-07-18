@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   PieChart, 
   TrendingUp, 
@@ -109,7 +109,16 @@ const TabsTrigger = ({ children, value, selectedValue, onValueChange }) => (
 
 const BudgetingModule = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(() => {
+    // Load from localStorage on first render
+    const saved = localStorage.getItem('budgetCategories');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Save to localStorage whenever categories change
+  useEffect(() => {
+    localStorage.setItem('budgetCategories', JSON.stringify(categories));
+  }, [categories]);
 
   // Add these state variables for modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -122,7 +131,7 @@ const BudgetingModule = () => {
       allocated: parseInt(prompt('Enter allocated amount:'), 10),
       spent: 0,
       icon: prompt('Enter emoji (e.g., 🍽️):') || '💰',
-      color: prompt('Enter color (blue, red, green, purple):') || 'blue'
+      
     };
 
     if (newCategory.name && !isNaN(newCategory.allocated)) {
