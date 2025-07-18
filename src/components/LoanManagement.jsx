@@ -85,47 +85,7 @@ const FinanceContext = createContext();
 
 const FinanceProvider = ({ children }) => {
   const [state, setState] = useState({
-    loans: [
-      {
-        id: "1",
-        type: "Personal Loan",
-        bank: "HDFC Bank",
-        originalAmount: 500000,
-        currentBalance: 350000,
-        monthlyEmi: 12500,
-        interestRate: 12.5,
-        remainingMonths: 28,
-        nextDueDate: "2024-07-25",
-        status: "active",
-        color: "bg-blue-500"
-      },
-      {
-        id: "2",
-        type: "Student Loan",
-        bank: "SBI",
-        originalAmount: 300000,
-        currentBalance: 180000,
-        monthlyEmi: 8200,
-        interestRate: 9.5,
-        remainingMonths: 22,
-        nextDueDate: "2024-07-28",
-        status: "active",
-        color: "bg-green-500"
-      },
-      {
-        id: "3",
-        type: "Credit Card",
-        bank: "ICICI Bank",
-        originalAmount: 50000,
-        currentBalance: 35000,
-        monthlyEmi: 3500,
-        interestRate: 18.0,
-        remainingMonths: 10,
-        nextDueDate: "2024-07-30",
-        status: "active",
-        color: "bg-red-500"
-      }
-    ]
+    loans: [] // Start with no loans, user must add their own
   });
 
   const addLoan = (loan) => {
