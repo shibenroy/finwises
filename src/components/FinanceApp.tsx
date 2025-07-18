@@ -15,8 +15,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Dashboard from './Dashboard';
-import BudgetingModule from './BudgetingModule';
-import LoanManagement from './LoanManagement';
+import BudgetingModule from './BudgetingModule.jsx';
+import LoanManagement from './LoanManagement.jsx';
 import FinancialEducation from './FinancialEducation';
 import OnboardingFlow from './OnboardingFlow';
 import { FinanceProvider, useFinance } from '@/contexts/FinanceContext';
@@ -89,9 +89,7 @@ const FinanceAppContent = () => {
               >
                 {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </Button>
-              <Button variant="ghost" size="icon">
-                <Bell className="w-5 h-5" />
-              </Button>
+              
               <Button variant="ghost" size="icon">
                 <User className="w-5 h-5" />
               </Button>
@@ -144,47 +142,7 @@ const FinanceAppContent = () => {
         </Tabs>
       </main>
 
-      {/* Bottom Navigation for Mobile */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-700">
-        <div className="flex justify-around items-center h-16">
-          <Button
-            variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('dashboard')}
-            className="flex flex-col items-center"
-          >
-            <PieChart className="w-4 h-4" />
-            <span className="text-xs mt-1">Dashboard</span>
-          </Button>
-          <Button
-            variant={activeTab === 'budgeting' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('budgeting')}
-            className="flex flex-col items-center"
-          >
-            <Target className="w-4 h-4" />
-            <span className="text-xs mt-1">Budget</span>
-          </Button>
-          <Button
-            variant={activeTab === 'loans' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('loans')}
-            className="flex flex-col items-center"
-          >
-            <CreditCard className="w-4 h-4" />
-            <span className="text-xs mt-1">Loans</span>
-          </Button>
-          <Button
-            variant={activeTab === 'education' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('education')}
-            className="flex flex-col items-center"
-          >
-            <BookOpen className="w-4 h-4" />
-            <span className="text-xs mt-1">Learn</span>
-          </Button>
-        </div>
-      </nav>
+      
     </div>
   );
 };
