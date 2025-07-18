@@ -11,9 +11,9 @@ import {
   X
 } from 'lucide-react';
 
-// Mock UI Components
+// --- UI COMPONENTS (Card, Button, etc.) ---
 const Card = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
+  <div className={`rounded-lg shadow-sm ${className}`}>
     {children}
   </div>
 );
@@ -36,11 +36,11 @@ const CardTitle = ({ children, className = "" }) => (
   </h3>
 );
 
-const Button = ({ children, variant = "default", size = "default", onClick, className = "" }) => {
+const Button = ({ children, variant = "default", size = "default", onClick, className = "", ...props }) => {
   const baseClasses = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
   const variantClasses = {
     default: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500"
+    outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
   };
   const sizeClasses = {
     default: "h-10 px-4 py-2",
@@ -51,6 +51,7 @@ const Button = ({ children, variant = "default", size = "default", onClick, clas
     <button 
       onClick={onClick}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      {...props}
     >
       {children}
     </button>
@@ -64,9 +65,9 @@ const Badge = ({ children, className = "" }) => (
 );
 
 const Progress = ({ value, className = "" }) => (
-  <div className={`w-full bg-gray-200 rounded-full ${className}`}>
+  <div className={`w-full bg-gray-200 dark:bg-gray-700 rounded-full ${className}`}>
     <div 
-      className="bg-blue-600 h-full rounded-full transition-all duration-300"
+      className="bg-blue-600 dark:bg-blue-400 h-full rounded-full transition-all duration-300"
       style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
     />
   </div>
@@ -78,17 +79,17 @@ const Input = ({ type = "text", placeholder, value, onChange, className = "" }) 
     placeholder={placeholder}
     value={value}
     onChange={onChange}
-    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${className}`}
+    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-900 dark:text-gray-100 ${className}`}
   />
 );
 
 const Label = ({ children, className = "" }) => (
-  <label className={`block text-sm font-medium text-gray-700 ${className}`}>
+  <label className={`block text-sm font-medium text-gray-700 dark:text-gray-200 ${className}`}>
     {children}
   </label>
 );
 
-// Mock Finance Context
+// --- CONTEXT ---
 const FinanceContext = createContext();
 
 const FinanceProvider = ({ children }) => {
@@ -167,7 +168,7 @@ const useFinance = () => {
   return context;
 };
 
-// Mock Toast Hook
+// --- MOCK TOAST ---
 const useToast = () => {
   const toast = ({ title, description }) => {
     alert(`${title}: ${description}`);
@@ -175,7 +176,7 @@ const useToast = () => {
   return { toast };
 };
 
-// EMI Calculator Component
+// --- MODALS (EMICalculator, AddLoanModal, PaymentModal, LoanDetailsModal) ---
 const EMICalculator = ({ isOpen, onClose }) => {
   const [loanAmount, setLoanAmount] = useState('');
   const [interestRate, setInterestRate] = useState('');
@@ -211,7 +212,7 @@ const EMICalculator = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">EMI Calculator</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -284,7 +285,6 @@ const EMICalculator = ({ isOpen, onClose }) => {
   );
 };
 
-// Add Loan Modal Component
 const AddLoanModal = ({ isOpen, onClose }) => {
   const { addLoan } = useFinance();
   const { toast } = useToast();
@@ -349,7 +349,7 @@ const AddLoanModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">Add New Loan</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -450,7 +450,6 @@ const AddLoanModal = ({ isOpen, onClose }) => {
   );
 };
 
-// Payment Modal Component
 const PaymentModal = ({ isOpen, onClose, loan }) => {
   const { updateLoan } = useFinance();
   const { toast } = useToast();
@@ -493,7 +492,7 @@ const PaymentModal = ({ isOpen, onClose, loan }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">Make Payment</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -502,9 +501,9 @@ const PaymentModal = ({ isOpen, onClose, loan }) => {
         </div>
 
         <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <h3 className="font-semibold">{loan.type}</h3>
-            <p className="text-sm text-gray-600">{loan.bank}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{loan.bank}</p>
             <p className="text-lg font-bold">Outstanding: ₹{loan.currentBalance.toLocaleString()}</p>
           </div>
 
@@ -513,7 +512,7 @@ const PaymentModal = ({ isOpen, onClose, loan }) => {
             <select 
               value={paymentType}
               onChange={(e) => setPaymentType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="emi">Regular EMI (₹{loan.monthlyEmi.toLocaleString()})</option>
               <option value="extra">Extra Payment</option>
@@ -563,7 +562,6 @@ const PaymentModal = ({ isOpen, onClose, loan }) => {
   );
 };
 
-// Loan Details Modal Component
 const LoanDetailsModal = ({ isOpen, onClose, loan }) => {
   if (!isOpen || !loan) return null;
 
@@ -573,7 +571,7 @@ const LoanDetailsModal = ({ isOpen, onClose, loan }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">Loan Details</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -659,7 +657,7 @@ const LoanDetailsModal = ({ isOpen, onClose, loan }) => {
   );
 };
 
-// Main Loan Management Component
+// --- MAIN COMPONENT ---
 const LoanManagement = () => {
   const { state } = useFinance();
   const [showEMICalculator, setShowEMICalculator] = useState(false);
@@ -689,10 +687,10 @@ const LoanManagement = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'overdue': return 'bg-red-100 text-red-800';
-      case 'paid': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
+      case 'overdue': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
+      case 'paid': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100';
     }
   };
 
@@ -703,7 +701,6 @@ const LoanManagement = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 transition-colors duration-300">
       <div className="space-y-6">
-        
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -755,48 +752,48 @@ const LoanManagement = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-yellow-500 to-yellow-600 dark:from-yellow-700 dark:to-yellow-900 text-white border-0">
+          <Card className="bg-gradient-to-r from-yellow-400 to-yellow-600 dark:from-yellow-700 dark:to-yellow-900 border-0">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-yellow-100 text-sm">Total Interest</p>
-                  <p className="text-2xl font-bold">₹{loanSummary.totalInterest.toLocaleString()}</p>
+                  <p className="text-yellow-900 dark:text-yellow-700 text-sm">Total Interest</p>
+                  <p className="text-2xl font-bold text-yellow-900 dark:text-white">₹{loanSummary.totalInterest.toLocaleString()}</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-yellow-200" />
+                <TrendingUp className="w-8 h-8 text-yellow-700 dark:text-yellow-200" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-700 dark:to-purple-900 text-white border-0">
+          <Card className="bg-gradient-to-r from-purple-400 to-purple-600 dark:from-purple-700 dark:to-purple-900 border-0">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm">Avg Interest Rate</p>
-                  <p className="text-2xl font-bold">{loanSummary.avgInterestRate}%</p>
+                  <p className="text-purple-900 dark:text-purple-100 text-sm">Avg Interest Rate</p>
+                  <p className="text-2xl font-bold text-purple-900 dark:text-white">{loanSummary.avgInterestRate}%</p>
                 </div>
-                <Target className="w-8 h-8 text-purple-200" />
+                <Target className="w-8 h-8 text-purple-700 dark:text-purple-200" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Loan Details */}
-        <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg transition-colors">
+        <Card className="bg-white dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg transition-colors">
           <CardHeader>
             <CardTitle className="text-xl font-bold dark:text-white">Active Loans</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               {state.loans.map((loan) => (
-                <div key={loan.id} className="p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div key={loan.id} className="p-6 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-4">
                       <div className={`w-12 h-12 ${loan.color} rounded-full flex items-center justify-center`}>
                         <CreditCard className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{loan.type}</h3>
-                        <p className="text-sm text-gray-500">{loan.bank}</p>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{loan.type}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{loan.bank}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
@@ -804,33 +801,33 @@ const LoanManagement = () => {
                         {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
                       </Badge>
                       <div className="text-right">
-                        <p className="text-sm text-gray-500">Next Due</p>
-                        <p className="font-medium">{loan.nextDueDate}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Next Due</p>
+                        <p className="font-medium dark:text-white">{loan.nextDueDate}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
-                      <p className="text-sm text-gray-500">Outstanding</p>
-                      <p className="text-lg font-semibold">₹{loan.currentBalance.toLocaleString()}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Outstanding</p>
+                      <p className="text-lg font-semibold dark:text-white">₹{loan.currentBalance.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Monthly EMI</p>
-                      <p className="text-lg font-semibold">₹{loan.monthlyEmi.toLocaleString()}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Monthly EMI</p>
+                      <p className="text-lg font-semibold dark:text-white">₹{loan.monthlyEmi.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Interest Rate</p>
-                      <p className="text-lg font-semibold">{loan.interestRate}%</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Interest Rate</p>
+                      <p className="text-lg font-semibold dark:text-white">{loan.interestRate}%</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Remaining Months</p>
-                      <p className="text-lg font-semibold">{loan.remainingMonths}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Remaining Months</p>
+                      <p className="text-lg font-semibold dark:text-white">{loan.remainingMonths}</p>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-gray-600">
+                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                       <span>Repayment Progress</span>
                       <span>{calculateProgress(loan.originalAmount, loan.currentBalance).toFixed(1)}% paid</span>
                     </div>
@@ -838,7 +835,7 @@ const LoanManagement = () => {
                       value={calculateProgress(loan.originalAmount, loan.currentBalance)} 
                       className="h-2"
                     />
-                    <div className="flex justify-between text-sm text-gray-500">
+                    <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
                       <span>₹{(loan.originalAmount - loan.currentBalance).toLocaleString()} paid</span>
                       <span>₹{loan.currentBalance.toLocaleString()} remaining</span>
                     </div>
@@ -851,7 +848,7 @@ const LoanManagement = () => {
                       ) : (
                         <CheckCircle className="w-4 h-4 text-green-500" />
                       )}
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         {loan.nextDueDate && new Date(loan.nextDueDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
                           ? 'Due soon' 
                           : 'On track'
@@ -883,47 +880,47 @@ const LoanManagement = () => {
 
         {/* Loan Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg transition-colors">
+          <Card className="bg-white dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg transition-colors">
             <CardHeader>
               <CardTitle className="text-xl font-bold dark:text-white">Payment Calendar</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-blue-900">Personal Loan - HDFC</p>
-                      <p className="text-sm text-blue-700">Due: July 25, 2024</p>
+                      <p className="font-medium text-blue-900 dark:text-blue-100">Personal Loan - HDFC</p>
+                      <p className="text-sm text-blue-700 dark:text-blue-200">Due: July 25, 2024</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-blue-900">₹12,500</p>
-                      <Badge className="bg-blue-100 text-blue-800 text-xs">Due in 3 days</Badge>
+                      <p className="font-semibold text-blue-900 dark:text-blue-100">₹12,500</p>
+                      <Badge className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 text-xs">Due in 3 days</Badge>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-green-50 rounded-lg">
+                <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-green-900">Student Loan - SBI</p>
-                      <p className="text-sm text-green-700">Due: July 28, 2024</p>
+                      <p className="font-medium text-green-900 dark:text-green-100">Student Loan - SBI</p>
+                      <p className="text-sm text-green-700 dark:text-green-200">Due: July 28, 2024</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-green-900">₹8,200</p>
-                      <Badge className="bg-green-100 text-green-800 text-xs">Due in 6 days</Badge>
+                      <p className="font-semibold text-green-900 dark:text-green-100">₹8,200</p>
+                      <Badge className="bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100 text-xs">Due in 6 days</Badge>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-red-50 rounded-lg">
+                <div className="p-4 bg-red-50 dark:bg-red-900/30 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-red-900">Credit Card - ICICI</p>
-                      <p className="text-sm text-red-700">Due: July 30, 2024</p>
+                      <p className="font-medium text-red-900 dark:text-red-100">Credit Card - ICICI</p>
+                      <p className="text-sm text-red-700 dark:text-red-200">Due: July 30, 2024</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-red-900">₹3,500</p>
-                      <Badge className="bg-red-100 text-red-800 text-xs">Due in 8 days</Badge>
+                      <p className="font-semibold text-red-900 dark:text-red-100">₹3,500</p>
+                      <Badge className="bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100 text-xs">Due in 8 days</Badge>
                     </div>
                   </div>
                 </div>
@@ -931,29 +928,29 @@ const LoanManagement = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg transition-colors">
+          <Card className="bg-white dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg transition-colors">
             <CardHeader>
               <CardTitle className="text-xl font-bold dark:text-white">Debt Management Tips</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="p-4 bg-purple-50 rounded-lg">
-                  <h4 className="font-semibold text-purple-900 mb-2">💡 Prioritize High Interest</h4>
-                  <p className="text-sm text-purple-700">
+                <div className="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                  <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">💡 Prioritize High Interest</h4>
+                  <p className="text-sm text-purple-700 dark:text-purple-200">
                     Focus on paying off your credit card debt first (18% interest rate) to save money.
                   </p>
                 </div>
               
-                <div className="p-4 bg-indigo-50 rounded-lg">
-                  <h4 className="font-semibold text-indigo-900 mb-2">📈 Extra Payment Impact</h4>
-                  <p className="text-sm text-indigo-700">
+                <div className="p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+                  <h4 className="font-semibold text-indigo-900 dark:text-indigo-100 mb-2">📈 Extra Payment Impact</h4>
+                  <p className="text-sm text-indigo-700 dark:text-indigo-200">
                     Adding ₹2,000 extra monthly to your personal loan can save ₹15,000 in interest.
                   </p>
                 </div>
               
-                <div className="p-4 bg-pink-50 rounded-lg">
-                  <h4 className="font-semibold text-pink-900 mb-2">🎯 Debt-Free Goal</h4>
-                  <p className="text-sm text-pink-700">
+                <div className="p-4 bg-pink-50 dark:bg-pink-900/30 rounded-lg">
+                  <h4 className="font-semibold text-pink-900 dark:text-pink-100 mb-2">🎯 Debt-Free Goal</h4>
+                  <p className="text-sm text-pink-700 dark:text-pink-200">
                     At current rate, you'll be debt-free in 4.5 years. Great progress!
                   </p>
                 </div>
@@ -968,18 +965,15 @@ const LoanManagement = () => {
         isOpen={showEMICalculator}
         onClose={() => setShowEMICalculator(false)}
       />
-      
       <AddLoanModal 
         isOpen={showAddLoan}
         onClose={() => setShowAddLoan(false)}
       />
-      
       <PaymentModal 
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
         loan={selectedLoan}
       />
-      
       <LoanDetailsModal 
         isOpen={showDetailsModal}
         onClose={() => setShowDetailsModal(false)}
